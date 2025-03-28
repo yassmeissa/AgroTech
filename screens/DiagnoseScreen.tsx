@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // Définir le type de la réponse de l'API basé sur la documentation
 interface SimilarImage {
@@ -39,7 +39,7 @@ interface Result {
     classification: Classification;
   };
   status: string;
-  [key: string]: any; // Pour les autres champs non utilisés
+  [key: string]: any;
 }
 
 interface ApiError {
@@ -50,7 +50,7 @@ const DiagnoseScreen = ({ route }) => {
   const { option, image } = route.params;
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Commence en true car on charge directement
 
   const analyzeImageOnServer = async (imageUri: string) => {
     setLoading(true);
@@ -63,7 +63,7 @@ const DiagnoseScreen = ({ route }) => {
       type: 'image/jpeg',
       name: 'plant.jpg',
     });
-    formData.append('similar_images', 'true'); // Demander explicitement les images similaires
+    formData.append('similar_images', 'true');
 
     try {
       const response = await fetch('https://plant.id/api/v3/identification', {
@@ -94,6 +94,16 @@ const DiagnoseScreen = ({ route }) => {
     }
   };
 
+  // Appel automatique de l'API quand le composant est monté
+  useEffect(() => {
+    if (image?.uri) {
+      analyzeImageOnServer(image.uri);
+    } else {
+      setError('Aucune image disponible pour analyse');
+      setLoading(false);
+    }
+  }, [image?.uri]); // Dépendance sur image.uri
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Diagnostic</Text>
@@ -105,15 +115,12 @@ const DiagnoseScreen = ({ route }) => {
         <Text style={styles.noImageText}>Aucune image sélectionnée</Text>
       )}
 
-      <Button
-        title="Analyser l'image"
-        onPress={() => analyzeImageOnServer(image.uri)}
-        disabled={loading}
-      />
-
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
-
-      {error ? (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={styles.loadingText}>Analyse en cours...</Text>
+        </View>
+      ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : result ? (
         <ScrollView style={styles.scrollView}>
@@ -225,6 +232,7 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 20,
+    padding: 10,
   },
   similarImagesTitle: {
     fontSize: 16,
@@ -250,6 +258,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
