@@ -3,9 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera to take pictures of plants.</string>
+	<string>Nous avons besoin d'accéder à votre caméra pour prendre des photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to choose a picture of plants.</string>
+	<string>Nous avons besoin d'accéder à votre galerie pour sélectionner des photos</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AgroTech a besoin d'accéder à votre caméra pour analyser les plantes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AgroTech a besoin d'accéder à votre galerie pour sélectionner des photos de plantes</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
