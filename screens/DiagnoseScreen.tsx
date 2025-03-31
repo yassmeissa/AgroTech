@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-// Définir le type de la réponse de l'API basé sur la documentation
+// Interfaces pour les types de données
 interface SimilarImage {
   id: string;
   url: string;
@@ -33,76 +33,192 @@ interface IsPlant {
   threshold: number;
 }
 
+interface DiseaseSuggestion {
+  id: string;
+  name: string;
+  probability: number;
+  similar_images: SimilarImage[];
+  details?: {
+    language: string;
+    entity_id: string;
+  };
+}
+
+interface DiseaseQuestion {
+  text: string;
+  translation: string;
+  options: {
+    yes: {
+      suggestion_index: number;
+      entity_id: string;
+      name: string;
+      translation: string;
+    };
+    no: {
+      suggestion_index: number;
+      entity_id: string;
+      name: string;
+      translation: string;
+    };
+  };
+}
+
+interface DiseaseResult {
+  suggestions: DiseaseSuggestion[];
+  question: DiseaseQuestion;
+}
+
+interface HealthResult {
+  is_healthy: {
+    binary: boolean;
+    threshold: number;
+    probability: number;
+  };
+  disease: DiseaseResult;
+}
+
 interface Result {
   result: {
     is_plant: IsPlant;
-    classification: Classification;
+    classification?: Classification;
+    health?: HealthResult;
   };
   status: string;
   [key: string]: any;
-}
-
-interface ApiError {
-  error: string;
 }
 
 const DiagnoseScreen = ({ route }) => {
   const { option, image } = route.params;
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // Commence en true car on charge directement
+  const [loading, setLoading] = useState(true);
+  const [showHealth, setShowHealth] = useState(false);
+
+  const handleQuestionResponse = (response: boolean) => {
+    if (!result?.result.health?.disease.question) return;
+
+    const option = response 
+      ? result.result.health.disease.question.options.yes
+      : result.result.health.disease.question.options.no;
+
+    Alert.alert(
+      'Réponse enregistrée',
+      `Vous avez sélectionné: ${option.name}`,
+      [
+        { text: 'OK', onPress: () => console.log('OK Pressed') }
+      ]
+    );
+  };
 
   const analyzeImageOnServer = async (imageUri: string) => {
     setLoading(true);
     setError(null);
     setResult(null);
-
-    const formData = new FormData();
-    formData.append('images', {
-      uri: imageUri,
-      type: 'image/jpeg',
-      name: 'plant.jpg',
-    });
-    formData.append('similar_images', 'true');
-
+  
     try {
-      const response = await fetch('https://plant.id/api/v3/identification', {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const base64data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+  
+      const base64Image = base64data.split(',')[1];
+  
+      const requestBody = {
+        images: [base64Image],
+        similar_images: true
+      };
+  
+      const apiResponse = await fetch('https://plant.id/api/v3/identification', {
         method: 'POST',
         headers: {
           'Api-Key': 'etydvmb6ZQDTHPZMsYrqE3q1SC85Atip4lqNwDs5kav6gPMnCo',
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify(requestBody),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.result?.classification?.suggestions?.length > 0) {
-          setResult(data);
-        } else {
-          setError('Aucune suggestion trouvée pour cette plante.');
-        }
+  
+      const data = await apiResponse.json();
+  
+      if (apiResponse.ok) {
+        setResult(data);
       } else {
         setError(data.error || 'Erreur lors de l\'analyse de l\'image.');
       }
     } catch (err) {
       console.error('Erreur de connexion:', err);
       setError('Erreur de connexion au serveur.');
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Appel automatique de l'API quand le composant est monté
-  useEffect(() => {
-    if (image?.uri) {
-      analyzeImageOnServer(image.uri);
-    } else {
-      setError('Aucune image disponible pour analyse');
-      setLoading(false);
+  const analyzeHealthOnServer = async (imageUri: string) => {
+    try {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const base64data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+  
+      const base64Image = base64data.split(',')[1];
+  
+      const requestBody = {
+        images: [base64Image],
+        health: 'only',
+        similar_images: true
+      };
+  
+      const apiResponse = await fetch('https://plant.id/api/v3/health_assessment', {
+        method: 'POST',
+        headers: {
+          'Api-Key': 'etydvmb6ZQDTHPZMsYrqE3q1SC85Atip4lqNwDs5kav6gPMnCo',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+  
+      const data = await apiResponse.json();
+  
+      if (apiResponse.ok) {
+        setResult(prev => ({
+          ...prev,
+          result: {
+            ...prev?.result,
+            health: data.result
+          }
+        }));
+      } else {
+        setError(data.error || 'Erreur lors de l\'évaluation de la santé.');
+      }
+    } catch (err) {
+      console.error('Erreur de connexion santé:', err);
+      setError('Erreur de connexion au serveur.');
     }
-  }, [image?.uri]); // Dépendance sur image.uri
+  };
+
+  useEffect(() => {
+    const analyzeImage = async () => {
+      if (image?.uri) {
+        try {
+          setLoading(true);
+          await analyzeImageOnServer(image.uri);
+          await analyzeHealthOnServer(image.uri);
+        } catch (err) {
+          setError('Erreur lors de l\'analyse');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setError('Aucune image disponible pour analyse');
+        setLoading(false);
+      }
+    };
+  
+    analyzeImage();
+  }, [image?.uri]);
 
   return (
     <View style={styles.container}>
@@ -115,6 +231,16 @@ const DiagnoseScreen = ({ route }) => {
         <Text style={styles.noImageText}>Aucune image sélectionnée</Text>
       )}
 
+      {!loading && !error && result && (
+        <View style={styles.toggleButtonContainer}>
+          <Button
+            title={showHealth ? "Voir l'identification" : "Voir les maladies"}
+            onPress={() => setShowHealth(!showHealth)}
+            color="#4CAF50"
+          />
+        </View>
+      )}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0000ff" />
@@ -124,45 +250,106 @@ const DiagnoseScreen = ({ route }) => {
         <Text style={styles.errorText}>{error}</Text>
       ) : result ? (
         <ScrollView style={styles.scrollView}>
-          <Text style={styles.resultTitle}>Résultats :</Text>
-          
-          {/* Information sur la détection de plante */}
-          <View style={styles.resultItem}>
-            <Text style={styles.resultText}>
-              Détection de plante : {result.result.is_plant.binary ? 'Oui' : 'Non'}
-            </Text>
-            <Text style={styles.resultText}>
-              Probabilité : {(result.result.is_plant.probability * 100).toFixed(2)}%
-            </Text>
-          </View>
-
-          {/* Suggestions de classification */}
-          {result.result.classification.suggestions.map((suggestion, index) => (
-            <View key={`${suggestion.id}-${index}`} style={styles.resultItem}>
-              <Text style={styles.suggestionName}>
-                {suggestion.name} ({(suggestion.probability * 100).toFixed(2)}%)
+          {showHealth ? (
+            <View style={styles.resultItem}>
+              <Text style={styles.sectionTitle}>État de santé de la plante</Text>
+              <Text style={styles.resultText}>
+                Santé: {result.result.health?.is_healthy.binary ? 'Saine' : 'Malade'}
+              </Text>
+              <Text style={styles.resultText}>
+                Probabilité: {(result.result.health?.is_healthy.probability * 100).toFixed(2)}%
               </Text>
 
-              {/* Images similaires */}
-              <Text style={styles.similarImagesTitle}>Images similaires :</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {suggestion.similar_images.map((img) => (
-                  <View key={img.id} style={styles.similarImageContainer}>
-                    <Image
-                      source={{ uri: img.url }}
-                      style={styles.similarImage}
-                    />
-                    <Text style={styles.similarityText}>
-                      Similarité: {(img.similarity * 100).toFixed(0)}%
-                    </Text>
-                    {img.citation && (
-                      <Text style={styles.citationText}>Source: {img.citation}</Text>
-                    )}
-                  </View>
-                ))}
-              </ScrollView>
+              {result.result.health?.disease.suggestions?.length > 0 ? (
+                <>
+                  <Text style={styles.resultText}>Maladies potentielles:</Text>
+                  {result.result.health.disease.suggestions.map((disease) => (
+                    <View key={disease.id} style={styles.diseaseItem}>
+                      <Text style={styles.diseaseText}>
+                        • {disease.name} ({(disease.probability * 100).toFixed(2)}%)
+                      </Text>
+                      {disease.similar_images?.length > 0 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                          {disease.similar_images.map((img) => (
+                            <View key={img.id} style={styles.similarImageContainer}>
+                              <Image
+                                source={{ uri: img.url_small || img.url }}
+                                style={styles.similarImage}
+                              />
+                              <Text style={styles.similarityText}>
+                                Similarité: {(img.similarity * 100).toFixed(0)}%
+                              </Text>
+                            </View>
+                          ))}
+                        </ScrollView>
+                      )}
+                    </View>
+                  ))}
+                  
+                  {result.result.health.disease.question && (
+                    <View style={styles.questionContainer}>
+                      <Text style={styles.questionText}>
+                        {result.result.health.disease.question.text}
+                      </Text>
+                      <View style={styles.questionButtons}>
+                        <Button
+                          title="Oui"
+                          onPress={() => handleQuestionResponse(true)}
+                          color="#4CAF50"
+                        />
+                        <Button
+                          title="Non"
+                          onPress={() => handleQuestionResponse(false)}
+                          color="#f44336"
+                        />
+                      </View>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <Text style={styles.resultText}>Aucune maladie détectée</Text>
+              )}
             </View>
-          ))}
+          ) : (
+            <>
+              <Text style={styles.sectionTitle}>Résultats d'identification</Text>
+              
+              <View style={styles.resultItem}>
+                <Text style={styles.resultText}>
+                  Détection de plante : {result.result.is_plant.binary ? 'Oui' : 'Non'}
+                </Text>
+                <Text style={styles.resultText}>
+                  Probabilité : {(result.result.is_plant.probability * 100).toFixed(2)}%
+                </Text>
+              </View>
+
+              {result.result.classification?.suggestions?.map((suggestion) => (
+                <View key={suggestion.id} style={styles.resultItem}>
+                  <Text style={styles.suggestionName}>
+                    {suggestion.name} ({(suggestion.probability * 100).toFixed(2)}%)
+                  </Text>
+
+                  <Text style={styles.similarImagesTitle}>Images similaires :</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {suggestion.similar_images.map((img) => (
+                      <View key={img.id} style={styles.similarImageContainer}>
+                        <Image
+                          source={{ uri: img.url }}
+                          style={styles.similarImage}
+                        />
+                        <Text style={styles.similarityText}>
+                          Similarité: {(img.similarity * 100).toFixed(0)}%
+                        </Text>
+                        {img.citation && (
+                          <Text style={styles.citationText}>Source: {img.citation}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              ))}
+            </>
+          )}
         </ScrollView>
       ) : null}
     </View>
@@ -201,12 +388,6 @@ const styles = StyleSheet.create({
   scrollView: {
     width: '100%',
   },
-  resultTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 15,
-  },
   resultItem: {
     marginBottom: 20,
     backgroundColor: '#fff',
@@ -218,21 +399,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  suggestionName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 10,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
     color: '#2c3e50',
   },
   resultText: {
     fontSize: 16,
     marginBottom: 5,
   },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
-    padding: 10,
+  suggestionName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#2c3e50',
   },
   similarImagesTitle: {
     fontSize: 16,
@@ -259,6 +440,12 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+    padding: 10,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -268,6 +455,39 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  toggleButtonContainer: {
+    marginBottom: 20,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  diseaseText: {
+    fontSize: 16,
+    marginLeft: 10,
+    marginBottom: 5,
+    color: '#e74c3c',
+  },
+  diseaseItem: {
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  questionContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 10,
+  },
+  questionText: {
+    fontSize: 16,
+    marginBottom: 15,
+    color: '#2c3e50',
+  },
+  questionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
   },
 });
 
