@@ -159,12 +159,26 @@ const HomeScreen = ({ navigation }) => {
         Diagnostic et soin pour vos cultures
       </Text>
 
-      <Button
-        title="Commencer le diagnostic"
-        onPress={() => setIsModalVisible(true)}
-        disabled={isLoading}
-      />
+      {/* Section Diagnostic */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Diagnostic des cultures</Text>
+        <Button
+          title="Commencer le diagnostic"
+          onPress={() => setIsModalVisible(true)}
+          disabled={isLoading}
+        />
+      </View>
 
+      {/* Section Climat */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Prévisions climatiques</Text>
+        <Button
+          title="Voir les prévisions"
+          onPress={() => navigation.navigate('Climat')}
+        />
+      </View>
+
+      {/* Modal pour choisir l'option de diagnostic */}
       <Modal
         isVisible={isModalVisible}
         onBackdropPress={() => setIsModalVisible(false)}
@@ -219,6 +233,16 @@ const styles = StyleSheet.create({
     color: '#7f8c8d',
     textAlign: 'center',
     marginBottom: 30,
+  },
+  section: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#2c3e50',
   },
   modal: {
     justifyContent: 'center',
