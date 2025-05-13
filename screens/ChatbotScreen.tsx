@@ -1,4 +1,3 @@
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
@@ -13,6 +12,7 @@ import {
   UIManager,
   View
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -28,25 +28,30 @@ export default function ChatbotScreen() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
+  
     const userMessage = { from: 'user', text: input };
     LayoutAnimation.easeInEaseOut();
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-
+  
     try {
       const res = await fetch('http://localhost:3000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
       });
-
+  
+      if (!res.ok) {
+        throw new Error('Erreur du serveur');
+      }
+  
       const data = await res.json();
       const botMessage = { from: 'bot', text: data.reply };
       LayoutAnimation.easeInEaseOut();
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
+      console.error(error);
       setMessages(prev => [...prev, {
         from: 'bot',
         text: "Désolé, je n'ai pas pu me connecter au serveur. Veuillez réessayer plus tard."
