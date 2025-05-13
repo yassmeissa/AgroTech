@@ -1,170 +1,237 @@
-import axios from 'axios';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-    Bubble,
-    GiftedChat,
-    IMessage,
-    InputToolbar,
-} from 'react-native-gifted-chat';
-const ChatBotScreen = () => {
-  const [messages, setMessages] = useState<IMessage[]>([]);
+  Image,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  UIManager,
+  View
+} from 'react-native';
 
-  // 🧠 Message d’accueil
-  useEffect(() => {
-    const welcomeMessage: IMessage = {
-      _id: 'welcome',
-      text: 'Bonjour 👋 Je suis AgroBot. Pose-moi une question sur tes cultures, la météo ou l’irrigation !',
-      createdAt: new Date(),
-      user: {
-        _id: 2,
-        name: 'AgroBot 🤖',
-      },
-    };
-    setMessages([welcomeMessage]);
-  }, []);
-  const [isBotBusy, setIsBotBusy] = useState(false);
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
-  const onSend = useCallback(async (newMessages: IMessage[] = []) => {
-    if (isBotBusy) return;
-  
-    setIsBotBusy(true);
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newMessages)
-    );
-  
-    const userMessage = newMessages[0].text;
-  
+export default function ChatbotScreen() {
+  const [messages, setMessages] = useState<{ from: 'user' | 'bot'; text: string }[]>([
+    { from: 'bot', text: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?' }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { from: 'user', text: input };
+    LayoutAnimation.easeInEaseOut();
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
     try {
-      const res = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `
-  Tu es AgroBot, un assistant agricole expert 🌾. 
-  Tu aides les utilisateurs à :
-  - diagnostiquer des maladies sur les plantes
-  - analyser la météo pour des décisions agricoles
-  - gérer l'irrigation avec des conseils techniques
-  
-  Sois clair, pratique, et adapté à des agriculteurs.
-              `,
-            },
-            { role: 'user', content: userMessage },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer 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`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-  
-      const botReply = res?.data?.choices?.[0]?.message?.content || "Je n’ai pas pu répondre.";
-  
-      const botMessage: IMessage = {
-        _id: Math.random().toString(36).substring(7),
-        text: botReply,
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'AgroBot 🤖',
-        },
-      };
-  
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [botMessage])
-      );
-    } catch (error: any) {
-      console.error('[ChatBot Error]', error);
-  
-      let message = "Une erreur s'est produite.";
-      if (error.response?.status === 429) {
-        message = "⏳ Trop de requêtes envoyées ! Attends quelques secondes...";
-      }
-  
-      const botMessage: IMessage = {
-        _id: Math.random().toString(36).substring(7),
-        text: message,
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'AgroBot 🤖',
-        },
-      };
-  
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [botMessage])
-      );
+      const res = await fetch('http://localhost:3000/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input }),
+      });
+
+      const data = await res.json();
+      const botMessage = { from: 'bot', text: data.reply };
+      LayoutAnimation.easeInEaseOut();
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        from: 'bot',
+        text: "Désolé, je n'ai pas pu me connecter au serveur. Veuillez réessayer plus tard."
+      }]);
     } finally {
-      setTimeout(() => {
-        setIsBotBusy(false);
-      }, 4000); // cooldown de 4s
+      setIsLoading(false);
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
   return (
-    <View style={styles.container}>
-      <GiftedChat
-        messages={messages}
-        onSend={(msgs) => onSend(msgs)}
-        user={{ _id: 1 }}
-        placeholder="Pose ta question ici..."
-        showUserAvatar={false}
-        showAvatarForEveryMessage={false}
-        renderBubble={renderBubble}
-        renderInputToolbar={renderInputToolbar}
-      />
-    </View>
-  );
-};
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={80}
+    >
+      <View style={styles.header}>
+        <Text style={styles.headerText}>🤖 Assistant Virtuel</Text>
+      </View>
 
-// 💬 Style des bulles
-const renderBubble = (props: any) => {
-  return (
-    <Bubble
-      {...props}
-      wrapperStyle={{
-        left: {
-          backgroundColor: '#f0f0f0',
-        },
-        right: {
-          backgroundColor: '#2196f3',
-        },
-      }}
-      textStyle={{
-        left: {
-          color: '#333',
-        },
-        right: {
-          color: '#fff',
-        },
-      }}
-    />
-  );
-};
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.chatContainer}
+        contentContainerStyle={styles.chatContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {messages.map((msg, index) => (
+          <View
+            key={index}
+            style={[
+              styles.messageBubble,
+              msg.from === 'user' ? styles.userBubble : styles.botBubble
+            ]}
+          >
+            {msg.from === 'bot' && (
+              <Image
+                source={require('../assets/bot-icon.png')}
+                style={styles.botIcon}
+              />
+            )}
+            <Text style={msg.from === 'user' ? styles.userText : styles.botText}>
+              {msg.text}
+            </Text>
+          </View>
+        ))}
 
-// ⌨️ Style de la barre de saisie
-const renderInputToolbar = (props: any) => (
-  <InputToolbar
-    {...props}
-    containerStyle={{
-      borderTopWidth: 1,
-      borderTopColor: '#ccc',
-      backgroundColor: '#fff',
-    }}
-  />
-);
+        {isLoading && (
+          <View style={[styles.messageBubble, styles.botBubble]}>
+            <Image
+              source={require('../assets/bot-icon.png')}
+              style={styles.botIcon}
+            />
+            <View style={styles.typingIndicator}>
+              <View style={styles.typingDot} />
+              <View style={styles.typingDot} />
+              <View style={styles.typingDot} />
+            </View>
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Écrivez votre message..."
+          placeholderTextColor="#aaa"
+          value={input}
+          onChangeText={setInput}
+          multiline
+        />
+        <TouchableOpacity
+          style={[styles.sendButton, (!input.trim() || isLoading) && styles.sendButtonDisabled]}
+          onPress={sendMessage}
+          disabled={!input.trim() || isLoading}
+        >
+          <Ionicons name="send" size={20} color="white" />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginBottom: Platform.OS === 'android' ? 0 : 10,
+    backgroundColor: '#e8eaf6',
   },
+  header: {
+    backgroundColor: '#3f51b5',
+    padding: 18,
+    alignItems: 'center',
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  chatContainer: {
+    flex: 1,
+    paddingHorizontal: 12,
+  },
+  chatContent: {
+    paddingVertical: 20,
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 18,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  botBubble: {
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
+  },
+  userBubble: {
+    backgroundColor: '#3f51b5',
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
+  },
+  botText: {
+    color: '#333',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  userText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  botIcon: {
+    width: 26,
+    height: 26,
+    marginRight: 8,
+    borderRadius: 13,
+  },
+  typingIndicator: {
+    flexDirection: 'row',
+    padding: 10,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+    marginHorizontal: 3,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    maxHeight: 100,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: '#3f51b5',
+    padding: 10,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#9fa8da',
+  }
 });
-
-export default ChatBotScreen;
