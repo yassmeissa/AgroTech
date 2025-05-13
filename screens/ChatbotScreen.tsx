@@ -20,7 +20,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function ChatbotScreen() {
   const [messages, setMessages] = useState<{ from: 'user' | 'bot'; text: string }[]>([
-    { from: 'bot', text: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?' }
+    { from: 'bot', text: "Bonjour ! Comment puis-je vous aider aujourd'hui ?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,41 +28,53 @@ export default function ChatbotScreen() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-  
-    const userMessage = { from: 'user', text: input };
-    LayoutAnimation.easeInEaseOut();
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-  
+
     try {
-      const res = await fetch('http://localhost:3000/chat', {
+      const userMessage = { from: 'user', text: input };
+      
+      // Commenté temporairement la mise à jour de l'état et l'animation
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setMessages(prev => [...prev, userMessage]);
+      
+      setInput('');
+      setIsLoading(true);
+
+      const res = await fetch('https://1b7a-46-193-1-122.ngrok-free.app/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
       });
-  
-      if (!res.ok) {
-        throw new Error('Erreur du serveur');
-      }
-  
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
       const data = await res.json();
+      if (!data || typeof data.reply !== 'string') {
+        throw new Error('Réponse du serveur invalide');
+      }
+
       const botMessage = { from: 'bot', text: data.reply };
-      LayoutAnimation.easeInEaseOut();
+      
+      // Commenté temporairement la mise à jour des messages
       setMessages(prev => [...prev, botMessage]);
+
     } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, {
+      console.error('Erreur:', error);
+      const errorMessage = {
         from: 'bot',
-        text: "Désolé, je n'ai pas pu me connecter au serveur. Veuillez réessayer plus tard."
-      }]);
+        text: "Désolé, une erreur s'est produite. Veuillez réessayer."
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
+    try {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    } catch (error) {
+      console.error('Erreur scrollToEnd :', error);
+    }
   }, [messages]);
 
   return (
@@ -81,30 +93,31 @@ export default function ChatbotScreen() {
         contentContainerStyle={styles.chatContent}
         showsVerticalScrollIndicator={false}
       >
-        {messages.map((msg, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageBubble,
-              msg.from === 'user' ? styles.userBubble : styles.botBubble
-            ]}
-          >
-            {msg.from === 'bot' && (
-              <Image
-                source={require('../assets/bot-icon.png')}
-                style={styles.botIcon}
-              />
-            )}
-            <Text style={msg.from === 'user' ? styles.userText : styles.botText}>
-              {msg.text}
-            </Text>
-          </View>
-        ))}
+        {/* Commenté temporairement pour tester sans afficher les messages */}
+     {messages.map((msg, index) => (
+  <View
+    key={index} // ✅ Utilise ça au lieu de `${index}-${Date.now()}`
+    style={[
+      styles.messageBubble,
+      msg.from === 'user' ? styles.userBubble : styles.botBubble
+    ]}
+  >
+    {msg.from === 'bot' && (
+      <Image
+        source={{ uri: 'https://img.icons8.com/emoji/48/robot-emoji.png' }}
+        style={styles.botIcon}
+      />
+    )}
+    <Text style={msg.from === 'user' ? styles.userText : styles.botText}>
+      {msg.text}
+    </Text>
+  </View>
+))}
 
         {isLoading && (
           <View style={[styles.messageBubble, styles.botBubble]}>
             <Image
-              source={require('../assets/bot-icon.png')}
+              source={{ uri: 'https://img.icons8.com/emoji/48/robot-emoji.png' }}
               style={styles.botIcon}
             />
             <View style={styles.typingIndicator}>
