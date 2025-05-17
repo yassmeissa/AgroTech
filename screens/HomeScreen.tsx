@@ -1,25 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
+  Animated,
+  Dimensions,
+  ImageBackground,
   Linking,
   PermissionsAndroid,
   Platform,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View
 } from 'react-native';
 import { launchCamera, launchImageLibrary, type CameraOptions, type ImageLibraryOptions } from 'react-native-image-picker';
+import LinearGradient from 'react-native-linear-gradient';
 import Modal from 'react-native-modal';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const scaleAnim = useState(new Animated.Value(0.9))[0];
 
-  // Vérification initiale des permissions
   useEffect(() => {
+    // Animation au chargement
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      })
+    ]).start();
+
     const checkPermissions = async () => {
       if (Platform.OS === 'android') {
         try {
@@ -30,7 +52,6 @@ const HomeScreen = ({ navigation }) => {
           setHasCameraPermission(false);
         }
       } else {
-        // iOS gère les permissions différemment (demandées au moment de l'utilisation)
         setHasCameraPermission(null);
       }
     };
@@ -58,7 +79,7 @@ const HomeScreen = ({ navigation }) => {
         return false;
       }
     }
-    return true; // Pour iOS, on suppose que la permission sera demandée par le système
+    return true;
   };
 
   const handleCameraError = (error: { code?: string; message?: string }) => {
@@ -92,7 +113,6 @@ const HomeScreen = ({ navigation }) => {
     setIsLoading(true);
     
     try {
-      // Vérification des permissions pour Android
       if (Platform.OS === 'android' && hasCameraPermission === false) {
         const permissionGranted = await requestCameraPermission();
         if (!permissionGranted) return;
@@ -153,96 +173,191 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bienvenue sur AgroTech 🌱</Text>
-      <Text style={styles.description}>
-        Diagnostic et soin pour vos cultures
-      </Text>
-
-      {/* Section Diagnostic */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Diagnostic des cultures</Text>
-        <Button
-          title="Commencer le diagnostic"
-          onPress={() => setIsModalVisible(true)}
-          disabled={isLoading}
-        />
-      </View>
-
-      {/* Section Climat */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Prévisions climatiques</Text>
-        <Button
-          title="Voir les prévisions"
-          onPress={() => navigation.navigate('Climat')}
-        />
-      </View>
-
-      {/* Modal pour choisir l'option de diagnostic */}
-      <Modal
-        isVisible={isModalVisible}
-        onBackdropPress={() => setIsModalVisible(false)}
-        style={styles.modal}
+    <ImageBackground 
+      source={require('../assets/background.png')} 
+      style={styles.background}
+      blurRadius={2}
+    >
+      <Animated.View 
+        style={[
+          styles.container, 
+          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+        ]}
       >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Choisir une option</Text>
-          
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#2c3e50" />
-          ) : (
-            <>
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="Prendre une photo"
-                  onPress={openCamera}
-                  disabled={isLoading}
-                />
-              </View>
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="Choisir une photo"
-                  onPress={openGallery}
-                  disabled={isLoading}
-                />
-              </View>
-            </>
-          )}
+        <View style={styles.header}>
+          <Text style={styles.title}>AgroTech 🌱</Text>
+          <Text style={styles.subtitle}>Votre assistant agricole intelligent</Text>
         </View>
-      </Modal>
-    </View>
+
+        <View style={styles.cardContainer}>
+          {/* Carte Diagnostic */}
+          <LinearGradient 
+            colors={['#4CAF50', '#8BC34A']} 
+            style={styles.card}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Icon name="photo-camera" size={40} color="white" style={styles.cardIcon} />
+            <Text style={styles.cardTitle}>Diagnostic des cultures</Text>
+            <Text style={styles.cardText}>
+              Analysez la santé de vos plantes en prenant une photo
+            </Text>
+            <TouchableOpacity 
+              style={styles.cardButton} 
+              onPress={() => setIsModalVisible(true)}
+              disabled={isLoading}
+            >
+              <Text style={styles.cardButtonText}>Commencer</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+
+          {/* Carte Climat */}
+          <LinearGradient 
+            colors={['#2196F3', '#03A9F4']} 
+            style={styles.card}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Icon name="wb-sunny" size={40} color="white" style={styles.cardIcon} />
+            <Text style={styles.cardTitle}>Prévisions climatiques</Text>
+            <Text style={styles.cardText}>
+              Consultez les prévisions météo pour votre région
+            </Text>
+            <TouchableOpacity 
+              style={styles.cardButton} 
+              onPress={() => navigation.navigate('Climat')}
+            >
+              <Text style={styles.cardButtonText}>Voir</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+
+        {/* Modal pour choisir l'option de diagnostic */}
+        <Modal
+          isVisible={isModalVisible}
+          onBackdropPress={() => setIsModalVisible(false)}
+          backdropOpacity={0.7}
+          animationIn="zoomIn"
+          animationOut="zoomOut"
+          animationInTiming={300}
+          animationOutTiming={300}
+          backdropTransitionInTiming={300}
+          backdropTransitionOutTiming={300}
+          style={styles.modal}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Méthode de diagnostic</Text>
+            
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>Préparation de l'appareil photo...</Text>
+              </View>
+            ) : (
+              <>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cameraButton]}
+                  onPress={openCamera}
+                >
+                  <Icon name="photo-camera" size={24} color="white" />
+                  <Text style={styles.modalButtonText}>Prendre une photo</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.galleryButton]}
+                  onPress={openGallery}
+                >
+                  <Icon name="photo-library" size={24} color="white" />
+                  <Text style={styles.modalButtonText}>Choisir une photo</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </Modal>
+      </Animated.View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 30,
+    marginBottom: 40,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#2c3e50',
-    textAlign: 'center',
+    color: 'white',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
-  description: {
+  subtitle: {
     fontSize: 16,
-    color: '#7f8c8d',
-    textAlign: 'center',
-    marginBottom: 30,
+    color: 'white',
+    marginTop: 8,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
-  section: {
-    marginBottom: 40,
+  cardContainer: {
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+  card: {
+    borderRadius: 20,
+    padding: 25,
+    height: height * 0.3,
+    justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
-  sectionTitle: {
+  cardIcon: {
+    marginBottom: 15,
+  },
+  cardTitle: {
     fontSize: 22,
     fontWeight: 'bold',
+    color: 'white',
     marginBottom: 10,
-    color: '#2c3e50',
+    textAlign: 'center',
+  },
+  cardText: {
+    fontSize: 14,
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
+    opacity: 0.9,
+  },
+  cardButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  cardButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   modal: {
     justifyContent: 'center',
@@ -252,20 +367,44 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: 'white',
     padding: 25,
-    borderRadius: 15,
-    width: '80%',
-    maxWidth: 350,
+    borderRadius: 20,
+    width: '85%',
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 25,
-    textAlign: 'center',
     color: '#2c3e50',
   },
-  buttonContainer: {
-    marginVertical: 10,
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  cameraButton: {
+    backgroundColor: '#4CAF50',
+  },
+  galleryButton: {
+    backgroundColor: '#2196F3',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 15,
+    color: '#555',
   },
 });
 
