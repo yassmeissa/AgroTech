@@ -1,55 +1,57 @@
 import React from 'react';
-import {
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import ChatBotScreen from '../screens/ChatbotScreen';
+import { Image, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import ChatbotScreen from '../screens/ChatbotScreen'; // Vérifie bien ce chemin
 
-const ChatBotModal = ({ visible, onClose }) => {
+interface ChatbotModalProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onClose }) => {
   return (
-    <Modal animationType="slide" visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>🤖 Assistant AgroTech</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeText}>Fermer</Text>
-          </TouchableOpacity>
-        </View>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalContainer}>
+        {/* Bouton de fermeture avec image */}
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <Image
+            source={require('../assets/icons/close.png')} // Chemin relatif vers ton image
+            style={styles.closeIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
 
-        <View style={{ flex: 1 }}>
-          <ChatBotScreen />
-        </View>
-      </SafeAreaView>
+        {/* Composant du chatbot */}
+        <ChatbotScreen />
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  modalContainer: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    backgroundColor: '#2196f3',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  closeButton: {
+    position: 'absolute',
+    top: 45,
+    right: 20,
+    zIndex: 999,
+    backgroundColor: '#6e48aa',
+    borderRadius: 20,
+    padding: 6,
+    elevation: 5,
   },
-  headerText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  closeText: {
-    color: '#fff',
-    fontSize: 16,
+  closeIcon: {
+    width: 25,
+    height: 25,
+    tintColor: '#fff', // Supprime-le si ton image a déjà la bonne couleur
   },
 });
 
-export default ChatBotModal;
+export default ChatbotModal;
