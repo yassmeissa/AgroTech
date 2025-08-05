@@ -175,7 +175,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
 <View style={styles.mainContainer}>
-<StatusBar backgroundColor="#4CAF50" barStyle="light-content" />
+<StatusBar backgroundColor="#FF9800" barStyle="light-content" />
 <Header />
       <ImageBackground 
         source={require('../assets/background.png')} 
