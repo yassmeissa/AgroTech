@@ -177,11 +177,8 @@ const HomeScreen = ({ navigation }) => {
 <View style={styles.mainContainer}>
 <StatusBar backgroundColor="#FF9800" barStyle="light-content" />
 <Header />
-      <ImageBackground 
-        source={require('../assets/background.png')} 
-        style={styles.background}
-        blurRadius={2}
-      >
+<Text style={styles.title}>AgroTech</Text>
+ 
         <Animated.View 
           style={[
             styles.contentContainer, 
@@ -272,7 +269,6 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </Modal>
         </Animated.View>
-      </ImageBackground>
     </View>
   );
 };
@@ -392,6 +388,16 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontWeight: '600',
   },
+  title: {
+  fontSize: 28,
+  fontWeight: 'bold',
+  color: '#FFFFFF',
+  textAlign: 'center',
+  marginTop: 20,
+  textShadowColor: 'rgba(0, 0, 0, 0.4)',
+  textShadowOffset: { width: 1, height: 2 },
+  textShadowRadius: 4,
+},
 });
 
 export default HomeScreen;

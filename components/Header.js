@@ -1,80 +1,87 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, StatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, StatusBar, Platform, Image } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
-const WAVE_HEIGHT = 40;
-const HEADER_HEIGHT = 100;
+const HEADER_HEIGHT = 220;
+
 const Header = () => {
+  const today = new Date().toDateString(); // e.g., "Tue Aug 6 2025"
+
   return (
     <>
-      <StatusBar 
+      <StatusBar
         barStyle="light-content"
         translucent
         backgroundColor="transparent"
       />
-      
-      <View>
-        {/* HEADER GRADIENT */}
-        <LinearGradient
-          colors={['#FF9800', '#FF5722']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.gradientFill, { height: HEADER_HEIGHT }]}
-        >
-          <SafeAreaView style={styles.safeArea}>
-            <Text style={styles.title}>AgroTech</Text>
-          </SafeAreaView>
-        </LinearGradient>
 
-        {/* COURBE AVEC DÉGRADÉ */}
-        <Svg
-          width={width}
-          height={WAVE_HEIGHT}
-          viewBox={`0 0 ${width} ${WAVE_HEIGHT}`}
-          preserveAspectRatio="none"
-        >
-          <Defs>
-            <SvgGradient id="waveGradient" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0%" stopColor="#FF9800" />
-              <Stop offset="100%" stopColor="#FF5722" />
-            </SvgGradient>
-          </Defs>
-
-          <Path
-            d={`
-              M0,0 
-              L0,${WAVE_HEIGHT - 20} 
-              Q${width * 0.25},${WAVE_HEIGHT + 10} ${width * 0.5},${WAVE_HEIGHT - 20}
-              Q${width * 0.75},${WAVE_HEIGHT - 40} ${width},${WAVE_HEIGHT - 10}
-              L${width},0
-              Z
-            `}
-            fill="url(#waveGradient)"
-          />
-        </Svg>
-      </View>
+      <LinearGradient
+        colors={['#036039', '#009933']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerContainer}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.topRow}>
+            <View>
+              <Text style={styles.greeting}>Hello, <Text style={styles.bold}>Good Morning</Text></Text>
+              <Text style={styles.date}>{today}</Text>
+            </View>
+            <Image
+              source={require('../assets/avatar.jpg')} // Mets une image ronde ici
+              style={styles.avatar}
+            />
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  gradientFill: {
+  headerContainer: {
+    height: HEADER_HEIGHT,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   safeArea: {
     flex: 1,
     justifyContent: 'center',
+    margin:20,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    color: 'white',
+  greeting: {
+    fontSize: 22,
+    color: '#fff',
+  },
+  bold: {
     fontWeight: 'bold',
+  },
+  date: {
+    fontSize: 16,
+    color: '#fce4ec',
+    marginTop: 4,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'white',
+      marginRight: 20, // ✅ Ajouté
+
   },
 });
 
