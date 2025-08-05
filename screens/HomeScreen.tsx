@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,10 +13,11 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { launchCamera, launchImageLibrary, type CameraOptions, type ImageLibraryOptions } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import LinearGradient from 'react-native-linear-gradient';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Header from '../components/Header';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,7 +29,6 @@ const HomeScreen = ({ navigation }) => {
   const scaleAnim = useState(new Animated.Value(0.9))[0];
 
   useEffect(() => {
-    // Animation au chargement
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -58,7 +58,7 @@ const HomeScreen = ({ navigation }) => {
 
     checkPermissions();
   }, []);
-
+ 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -111,7 +111,7 @@ const HomeScreen = ({ navigation }) => {
 
   const openCamera = async () => {
     setIsLoading(true);
-    
+
     try {
       if (Platform.OS === 'android' && hasCameraPermission === false) {
         const permissionGranted = await requestCameraPermission();
@@ -127,7 +127,7 @@ const HomeScreen = ({ navigation }) => {
       };
 
       const result = await launchCamera(options);
-      
+
       if (result.didCancel) {
         console.log('Utilisateur a annulé');
       } else if (result.errorCode) {
@@ -158,7 +158,7 @@ const HomeScreen = ({ navigation }) => {
       };
 
       const result = await launchImageLibrary(options);
-      
+
       if (result.assets?.[0]) {
         navigation.navigate('Diagnose', {
           option: 'gallery',
@@ -172,147 +172,130 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+
   return (
-    <ImageBackground 
-      source={require('../assets/background.png')} 
-      style={styles.background}
-      blurRadius={2}
-    >
-      <Animated.View 
-        style={[
-          styles.container, 
-          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-        ]}
+<View style={styles.mainContainer}>
+      <Header />
+      <ImageBackground 
+        source={require('../assets/background.png')} 
+        style={styles.background}
+        blurRadius={2}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>AgroTech 🌱</Text>
-          <Text style={styles.subtitle}>Votre assistant agricole intelligent</Text>
-        </View>
-
-        <View style={styles.cardContainer}>
-          {/* Carte Diagnostic */}
-          <LinearGradient 
-            colors={['#4CAF50', '#8BC34A']} 
-            style={styles.card}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Icon name="photo-camera" size={40} color="white" style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Diagnostic des cultures</Text>
-            <Text style={styles.cardText}>
-              Analysez la santé de vos plantes en prenant une photo
-            </Text>
-            <TouchableOpacity 
-              style={styles.cardButton} 
-              onPress={() => setIsModalVisible(true)}
-              disabled={isLoading}
-            >
-              <Text style={styles.cardButtonText}>Commencer</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-
-          {/* Carte Climat */}
-          <LinearGradient 
-            colors={['#2196F3', '#03A9F4']} 
-            style={styles.card}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Icon name="wb-sunny" size={40} color="white" style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Prévisions climatiques</Text>
-            <Text style={styles.cardText}>
-              Consultez les prévisions météo pour votre région
-            </Text>
-            <TouchableOpacity 
-              style={styles.cardButton} 
-              onPress={() => navigation.navigate('Climat')}
-            >
-              <Text style={styles.cardButtonText}>Voir</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-        </View>
-
-        {/* Modal pour choisir l'option de diagnostic */}
-        <Modal
-          isVisible={isModalVisible}
-          onBackdropPress={() => setIsModalVisible(false)}
-          backdropOpacity={0.7}
-          animationIn="zoomIn"
-          animationOut="zoomOut"
-          animationInTiming={300}
-          animationOutTiming={300}
-          backdropTransitionInTiming={300}
-          backdropTransitionOutTiming={300}
-          style={styles.modal}
+        <Animated.View 
+          style={[
+            styles.contentContainer, 
+            { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+          ]}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Méthode de diagnostic</Text>
-            
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
-                <Text style={styles.loadingText}>Préparation de l'appareil photo...</Text>
-              </View>
-            ) : (
-              <>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.cameraButton]}
-                  onPress={openCamera}
-                >
-                  <Icon name="photo-camera" size={24} color="white" />
-                  <Text style={styles.modalButtonText}>Prendre une photo</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.galleryButton]}
-                  onPress={openGallery}
-                >
-                  <Icon name="photo-library" size={24} color="white" />
-                  <Text style={styles.modalButtonText}>Choisir une photo</Text>
-                </TouchableOpacity>
-              </>
-            )}
+          <View style={styles.cardContainer}>
+       
+            <LinearGradient 
+              colors={['#4CAF50', '#8BC34A']} 
+              style={styles.card}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Icon name="photo-camera" size={40} color="white" style={styles.cardIcon} />
+              <Text style={styles.cardTitle}>Diagnostic des cultures</Text>
+              <Text style={styles.cardText}>
+                Analysez la santé de vos plantes en prenant une photo
+              </Text>
+              <TouchableOpacity 
+                style={styles.cardButton} 
+                onPress={() => setIsModalVisible(true)}
+                disabled={isLoading}
+              >
+                <Text style={styles.cardButtonText}>Commencer</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <LinearGradient 
+              colors={['#2196F3', '#03A9F4']} 
+              style={styles.card}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Icon name="wb-sunny" size={40} color="white" style={styles.cardIcon} />
+              <Text style={styles.cardTitle}>Prévisions climatiques</Text>
+              <Text style={styles.cardText}>
+                Consultez les prévisions météo pour votre région
+              </Text>
+              <TouchableOpacity 
+                style={styles.cardButton} 
+                onPress={() => navigation.navigate('Climat')}
+              >
+                <Text style={styles.cardButtonText}>Voir</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
-        </Modal>
-      </Animated.View>
-    </ImageBackground>
+
+          <Modal
+            isVisible={isModalVisible}
+            onBackdropPress={() => setIsModalVisible(false)}
+            backdropOpacity={0.7}
+            animationIn="zoomIn"
+            animationOut="zoomOut"
+            animationInTiming={300}
+            animationOutTiming={300}
+            backdropTransitionInTiming={300}
+            backdropTransitionOutTiming={300}
+            style={styles.modal}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Méthode de diagnostic</Text>
+
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#4CAF50" />
+                  <Text style={styles.loadingText}>Préparation de l'appareil photo...</Text>
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.cameraButton]}
+                    onPress={openCamera}
+                  >
+                    <Icon name="photo-camera" size={24} color="white" />
+                    <Text style={styles.modalButtonText}>Prendre une photo</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.galleryButton]}
+                    onPress={openGallery}
+                  >
+                    <Icon name="photo-library" size={24} color="white" />
+                    <Text style={styles.modalButtonText}>Choisir une photo</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </Modal>
+        </Animated.View>
+      </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
   background: {
     flex: 1,
     width: '100%',
     height: '100%',
+    paddingTop: 0, // Pas de décalage nécessaire
   },
-  container: {
+  contentContainer: {
     flex: 1,
     padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'white',
-    marginTop: 8,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    paddingTop: 10, // Petit espace après le header
   },
   cardContainer: {
     flex: 1,
     justifyContent: 'space-around',
+    marginTop: 20,
   },
   card: {
     borderRadius: 20,
@@ -403,8 +386,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loadingText: {
-    marginTop: 15,
-    color: '#555',
+    marginTop: 10,
+    fontSize: 16,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
 });
 
