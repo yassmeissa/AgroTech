@@ -18,7 +18,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from '../components/Header';
-
+import { StatusBar } from 'react-native';
 const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
@@ -175,7 +175,8 @@ const HomeScreen = ({ navigation }) => {
 
   return (
 <View style={styles.mainContainer}>
-      <Header />
+<StatusBar backgroundColor="#4CAF50" barStyle="light-content" />
+<Header />
       <ImageBackground 
         source={require('../assets/background.png')} 
         style={styles.background}
