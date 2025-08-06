@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 
 const SunArc = ({ sunrise, sunset }) => {
-      console.log("✅ SunArc rendu avec props :", sunrise, sunset);
+  console.log("✅ SunArc rendu avec props :", sunrise, sunset);
   const arcWidth = 280;
   const arcHeight = 80;
   const now = new Date();
@@ -28,29 +28,34 @@ const SunArc = ({ sunrise, sunset }) => {
   const sunsetTime = parseTime(sunset);
   const currentTime = now.getHours() + now.getMinutes() / 60;
 
-  // DEBUG 👇
-  console.log('🕗 Heure actuelle :', currentTime.toFixed(2));
-  console.log('🌅 Heure lever du soleil :', sunriseTime.toFixed(2), `(${sunrise})`);
-  console.log('🌇 Heure coucher du soleil :', sunsetTime.toFixed(2), `(${sunset})`);
-
   const ratio = Math.min(Math.max((currentTime - sunriseTime) / (sunsetTime - sunriseTime), 0), 1);
-  console.log('🔄 Ratio (progression du jour) :', ratio.toFixed(2));
 
-  const sunX = 20 + ratio * arcWidth;
-  const sunY = arcHeight - Math.sin(ratio * Math.PI) * arcHeight;
-  console.log('☀️ Position du soleil :', `X: ${sunX.toFixed(1)}, Y: ${sunY.toFixed(1)}`);
+  // Calcul de la position sur la courbe quadratique
+  const calculateQuadraticPoint = (t, p0, p1, p2) => {
+    const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
+    const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+    return { x, y };
+  };
+
+  // Points de contrôle pour la courbe quadratique
+  const startPoint = { x: 20, y: arcHeight };
+  const controlPoint = { x: arcWidth / 2 + 20, y: 0 };
+  const endPoint = { x: arcWidth + 20, y: arcHeight };
+
+  // Position du soleil
+  const sunPosition = calculateQuadraticPoint(ratio, startPoint, controlPoint, endPoint);
 
   return (
     <View style={{ alignItems: 'center', marginTop: -10 }}>
       <Svg width={arcWidth + 40} height={arcHeight + 30}>
         <Path
-          d={`M20 ${arcHeight} Q${arcWidth / 2 + 20} 0 ${arcWidth + 20} ${arcHeight}`}
+          d={`M${startPoint.x} ${startPoint.y} Q${controlPoint.x} ${controlPoint.y} ${endPoint.x} ${endPoint.y}`}
           stroke="#ccc"
           strokeWidth="1.5"
           strokeDasharray="12,6"
           fill="none"
         />
-        <Circle cx={sunX} cy={sunY} r="10" fill="#f1c40f" />
+        <Circle cx={sunPosition.x} cy={sunPosition.y} r="10" fill="#f1c40f" />
       </Svg>
 
       <View
