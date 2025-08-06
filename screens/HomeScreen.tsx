@@ -6,6 +6,7 @@ import {
   Dimensions,
   Image,
   Linking,
+  ScrollView,
   PermissionsAndroid,
   Platform,
   StyleSheet,
@@ -24,11 +25,19 @@ import axios from 'axios';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import { Svg, Line } from 'react-native-svg';
 import SunArc from '../components/SunArc';
-import  { Path, Circle } from 'react-native-svg';
-import { useSharedValue, useAnimatedProps, withTiming } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 const { height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
+  const [lastDetectedPlants, setLastDetectedPlants] = useState([
+  { name: 'Tomate', image: 'https://img.icons8.com/color/96/tomato.png' },
+  { name: 'Maïs', image: 'https://img.icons8.com/color/96/corn.png' },
+  { name: 'Blé', image: 'https://img.icons8.com/color/96/wheat.png' },
+  { name: 'Riz', image: 'https://img.icons8.com/color/96/rice-bowl.png' },
+  { name: 'Pomme de terre', image: 'https://img.icons8.com/color/96/potato.png' },
+]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +109,32 @@ const HomeScreen = ({ navigation }) => {
     };
     checkPermissions();
   }, []);
+
+
+
+
+  useEffect(() => {
+  const fetchDiagnosisHistory = async () => {
+    try {
+      const historyJson = await AsyncStorage.getItem('diagnosisHistory');
+      const history = historyJson ? JSON.parse(historyJson) : [];
+const formatted = history.slice(0, 5).map(entry => ({
+  name: entry.result?.classification?.suggestions?.[0]?.name || 'Plante inconnue',
+  image: entry.imageUri,
+  result: entry.result,
+}));
+
+      setLastDetectedPlants(formatted);
+    } catch (error) {
+      console.error('Erreur lors du chargement de l’historique :', error);
+    }
+  };
+
+  const unsubscribe = navigation.addListener('focus', fetchDiagnosisHistory);
+
+  return unsubscribe;
+}, [navigation]);
+
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -192,136 +227,124 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  return (
-    <View style={styles.mainContainer}>
-      <Header />
+return (
+  <View style={styles.mainContainer}>
+    <Header />
 
+    {weatherData && (
+      <View style={styles.weatherCardContainer}>
+        <TouchableOpacity
+          style={styles.weatherCard}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Climat')}
+        >
+          {/* Contenu de la carte météo */}
+          <View style={styles.locationRow}>
+            <EvilIcons name="location" size={26} color="#e74c3c" style={styles.locationIcon} />
+            <Text style={styles.location}>{weatherData.location.name}</Text>
+          </View>
 
-
-{weatherData && (
-  <View style={styles.weatherCardContainer}>
-<TouchableOpacity
-  style={styles.weatherCard}
-  activeOpacity={0.9}
-  onPress={() => navigation.navigate('Climat')}
->
-<View style={styles.locationRow}>
-<EvilIcons name="location" size={26} color="#e74c3c" style={styles.locationIcon} />
-  <Text style={styles.location}>{weatherData.location.name}</Text>
-</View>  
-
-<View style={styles.weatherMainRow}>
-  {/* Température actuelle */}
-  <View style={styles.tempRow}>
-    <Text style={styles.tempValue}>+{weatherData.current.temp_c}</Text>
-    <Text style={styles.tempUnit}>°C</Text>
-  </View>
-
-  {/* H / L */}
-  <View style={styles.hlColumnCenter}>
-    <View style={styles.hlRow}>
-      <Text style={styles.hlText}>Max: {weatherData.forecast.forecastday[0].day.maxtemp_c}</Text>
-      <Text style={styles.hlUnit}>°C</Text>
-    </View>
-    <View style={styles.hlRow}>
-      <Text style={styles.hlText}>Min: {weatherData.forecast.forecastday[0].day.mintemp_c}</Text>
-      <Text style={styles.hlUnit}>°C</Text>
-    </View>
-  </View>
-
-  {/* Icône météo */}
-  <Image source={{ uri: `https:${weatherData.current.condition.icon}` }} style={styles.weatherIconSmall} />
-</View>
-<View style={styles.dashedLineContainer}>
-  <Svg height="2" width="100%">
-<Line
-  x1="0"
-  y1="0"
-  x2="100%"
-  y2="0"
-  stroke="#ccc"
-  strokeWidth="2"
-  strokeDasharray="12, 6" // ✅ Tirets plus longs et plus espacés
-/>
-  </Svg>
-</View>
-      <View style={styles.metricsRow}>
-        <View><Text style={styles.label}>Humidité</Text><Text>{weatherData.current.humidity}%</Text></View>
-        <View><Text style={styles.label}>Pluies</Text><Text>{weatherData.forecast.forecastday[0].day.totalprecip_mm} mm</Text></View>
-        <View><Text style={styles.label}>Pression</Text><Text>{weatherData.current.pressure_mb} hPa</Text></View>
-        <View><Text style={styles.label}>Vent</Text><Text>{weatherData.current.wind_kph} km/h</Text></View>
-      </View>
-<SunArc
-  sunrise={weatherData.forecast.forecastday[0].astro.sunrise}
-  sunset={weatherData.forecast.forecastday[0].astro.sunset}
-/>
-   </TouchableOpacity>
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  </View>
-)}
-
-
-      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-        <View style={styles.cardContainer}>
-          <LinearGradient colors={['#4CAF50', '#8BC34A']} style={styles.card}>
-            <Icon name="photo-camera" size={40} color="white" style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Diagnostic des cultures</Text>
-            <Text style={styles.cardText}>Analysez la santé de vos plantes en prenant une photo</Text>
-            <TouchableOpacity style={styles.cardButton} onPress={() => setIsModalVisible(true)} disabled={isLoading}>
-              <Text style={styles.cardButtonText}>Commencer</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-
-          <LinearGradient colors={['#2196F3', '#03A9F4']} style={styles.card}>
-            <Icon name="wb-sunny" size={40} color="white" style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Prévisions climatiques</Text>
-            <Text style={styles.cardText}>Consultez les prévisions météo pour votre région</Text>
-            <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate('Climat')}>
-              <Text style={styles.cardButtonText}>Voir</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-        </View>
-      </Animated.View>
-
-      <Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)} style={styles.modal}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Méthode de diagnostic</Text>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4CAF50" />
-              <Text style={styles.loadingText}>Préparation de l'appareil photo...</Text>
+          <View style={styles.weatherMainRow}>
+            <View style={styles.tempRow}>
+              <Text style={styles.tempValue}>+{weatherData.current.temp_c}</Text>
+              <Text style={styles.tempUnit}>°C</Text>
             </View>
-          ) : (
-            <>
-              <TouchableOpacity style={[styles.modalButton, styles.cameraButton]} onPress={openCamera}>
-                <Icon name="photo-camera" size={24} color="white" />
-                <Text style={styles.modalButtonText}>Prendre une photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.galleryButton]} onPress={openGallery}>
-                <Icon name="photo-library" size={24} color="white" />
-                <Text style={styles.modalButtonText}>Choisir une photo</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </Modal>
+
+            <View style={styles.hlColumnCenter}>
+              <View style={styles.hlRow}>
+                <Text style={styles.hlText}>Max: {weatherData.forecast.forecastday[0].day.maxtemp_c}</Text>
+                <Text style={styles.hlUnit}>°C</Text>
+              </View>
+              <View style={styles.hlRow}>
+                <Text style={styles.hlText}>Min: {weatherData.forecast.forecastday[0].day.mintemp_c}</Text>
+                <Text style={styles.hlUnit}>°C</Text>
+              </View>
+            </View>
+
+            <Image source={{ uri: `https:${weatherData.current.condition.icon}` }} style={styles.weatherIconSmall} />
+          </View>
+
+          <View style={styles.dashedLineContainer}>
+            <Svg height="2" width="100%">
+              <Line
+                x1="0"
+                y1="0"
+                x2="100%"
+                y2="0"
+                stroke="#ccc"
+                strokeWidth="2"
+                strokeDasharray="12, 6"
+              />
+            </Svg>
+          </View>
+
+          <View style={styles.metricsRow}>
+            <View><Text style={styles.label}>Humidité</Text><Text>{weatherData.current.humidity}%</Text></View>
+            <View><Text style={styles.label}>Pluies</Text><Text>{weatherData.forecast.forecastday[0].day.totalprecip_mm} mm</Text></View>
+            <View><Text style={styles.label}>Pression</Text><Text>{weatherData.current.pressure_mb} hPa</Text></View>
+            <View><Text style={styles.label}>Vent</Text><Text>{weatherData.current.wind_kph} km/h</Text></View>
+          </View>
+
+          <SunArc
+            sunrise={weatherData.forecast.forecastday[0].astro.sunrise}
+            sunset={weatherData.forecast.forecastday[0].astro.sunset}
+          />
+        </TouchableOpacity>
+      </View>
+    )}
+<Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)} style={styles.modal}>
+<View style={styles.modalContent}>
+<Text style={styles.modalTitle}>Méthode de diagnostic</Text>
+{isLoading ? (
+<View style={styles.loadingContainer}>
+<ActivityIndicator size="large" color="#4CAF50" />
+<Text style={styles.loadingText}>Préparation de l'appareil photo...</Text>
+</View>
+) : (
+<>
+<TouchableOpacity style={[styles.modalButton, styles.cameraButton]} onPress={openCamera}>
+<Icon name="photo-camera" size={24} color="white" />
+<Text style={styles.modalButtonText}>Prendre une photo</Text>
+</TouchableOpacity>
+<TouchableOpacity style={[styles.modalButton, styles.galleryButton]} onPress={openGallery}>
+<Icon name="photo-library" size={24} color="white" />
+<Text style={styles.modalButtonText}>Choisir une photo</Text>
+</TouchableOpacity>
+</>
+)}
+</View>
+</Modal> 
+    {/* Section de diagnostic */}
+    <View style={styles.diagnosisSection}>
+      <View style={styles.diagnosisHeader}>
+        <Text style={styles.diagnosisTitle}>Diagnostic</Text>
+        <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+          <Text style={styles.diagnosisAction}>Analyser</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.subtitle}>Dernières plantes détectées</Text>
+<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+  {lastDetectedPlants.map((plant, index) => (
+    <TouchableOpacity
+      key={index}
+      style={styles.plantCard}
+      onPress={() =>
+        navigation.navigate('Diagnose', {
+          option: 'Historique',
+          image: { uri: plant.image },
+          result: plant.result,
+        })
+      }
+    >
+      <Image source={{ uri: plant.image }} style={styles.plantImage} />
+      <Text style={styles.plantName}>{plant.name}</Text>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
     </View>
-  );
+  </View>
+);
 };
 
 const styles = StyleSheet.create({
@@ -344,7 +367,7 @@ weatherCard: {
   shadowRadius: 5,
   elevation: 8,
 },
-  mainContainer: { flex: 1, backgroundColor: '#f5f5f5' },
+  ntainer: { flex: 1, backgroundColor: '#f5f5f5' },
   contentContainer: { flex: 1, padding: 20 },
   cardContainer: { flex: 1, justifyContent: 'space-around', marginTop: 20 },
   card: {
@@ -372,8 +395,8 @@ weatherCard: {
   modalContent: { backgroundColor: 'white', padding: 25, borderRadius: 20, width: '85%', alignItems: 'center' },
   modalTitle: { fontFamily: 'Poppins',fontSize: 22, fontWeight: 'bold', marginBottom: 25, color: '#2c3e50' },
   modalButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', paddingVertical: 15, borderRadius: 12, marginBottom: 15 },
-  cameraButton: { backgroundColor: '#4CAF50' },
-  galleryButton: { backgroundColor: '#2196F3' },
+  cameraButton: { backgroundColor: '#03482bff' },
+  galleryButton: { backgroundColor: '#009933' },
   modalButtonText: {fontFamily: 'Poppins', color: 'white', fontWeight: 'bold', fontSize: 16, marginLeft: 10 },
   loadingContainer: { alignItems: 'center', padding: 20 },
   loadingText: {fontFamily: 'Poppins', marginTop: 10, fontSize: 16, color: '#4CAF50', fontWeight: '600' },
@@ -506,6 +529,90 @@ dashedLineContainer: {
   marginVertical: 10,
   alignItems: 'center',
   alignSelf: 'center', // ✅ Centrage horizontal
+},
+
+ mainContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingBottom: 20, // Pour espacer le bas de l'écran
+  },
+
+viewAllButton: {
+  fontFamily: 'Poppins',
+  fontSize: 14,
+  color: '#388e3c',
+},
+diagnosisScroll: {
+  flexDirection: 'row',
+},
+diagnosisCard: {
+  marginRight: 15,
+  width: 130,
+  height: 120,
+  borderRadius: 12,
+  overflow: 'hidden',
+  backgroundColor: '#fff',
+  elevation: 4,
+},
+diagnosisImage: {
+  width: '100%',
+  height: '80%',
+},
+diagnosisCardText: {
+  textAlign: 'center',
+  fontFamily: 'Poppins',
+  fontSize: 14,
+  paddingTop: 4,
+},
+
+
+diagnosisSection: {
+  marginTop: 300, // ajusté selon la hauteur de la weather card + top
+  paddingHorizontal: 20,
+},
+diagnosisHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+diagnosisTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  fontFamily: 'Poppins',
+  color: '#2c3e50',
+},
+diagnosisAction: {
+  fontSize: 14,
+  color: '#388e3c',
+  fontFamily: 'Poppins',
+},
+
+subtitle: {
+  fontSize: 14,
+  color: '#888',
+  fontFamily: 'Poppins',
+  marginBottom: 10,
+},
+
+plantCard: {
+  marginRight: 15,
+  alignItems: 'center',
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  padding: 10,
+  elevation: 4,
+  width: 100,
+},
+plantImage: {
+  width: 60,
+  height: 60,
+  marginBottom: 5,
+},
+plantName: {
+  fontSize: 12,
+  fontFamily: 'Poppins',
+  textAlign: 'center',
 },
 });
 
