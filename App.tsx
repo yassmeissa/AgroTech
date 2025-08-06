@@ -14,15 +14,15 @@ export default function App() {
     <View style={{ flex: 1 }}>
       <NavigationContainer>
         <Stack.Navigator 
-          initialRouteName="FaceIDScreen"
+          initialRouteName="Home"
           screenOptions={{
             headerShown: false // Cache les en-têtes par défaut pour tous les écrans
           }}
         >
-          <Stack.Screen 
+          {/* <Stack.Screen 
             name="FaceIDScreen" 
             component={FaceIDScreen} 
-          />
+          /> */}
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Diagnose" component={DiagnoseScreen} />
           <Stack.Screen name="Climat" component={ClimatScreen} />

@@ -18,7 +18,7 @@ const Header = () => {
       />
 
       <LinearGradient
-        colors={['#036039', '#009933']}
+        colors={['#03482bff', '#009933']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.headerContainer}
@@ -69,11 +69,7 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
   },
-  date: {
-    fontSize: 16,
-    color: '#fce4ec',
-    marginTop: 4,
-  },
+
   avatar: {
     width: 48,
     height: 48,
@@ -82,6 +78,21 @@ const styles = StyleSheet.create({
     borderColor: 'white',
       marginRight: 20, // ✅ Ajouté
 
+  },
+    greeting: {
+    fontSize: 22,
+    color: '#fff',
+    fontFamily: 'Poppins-Regular',
+  },
+  bold: {
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
+  },
+  date: {
+    fontSize: 16,
+    color: '#fce4ec',
+    marginTop: 8,
+    fontFamily: 'Poppins-Regular',
   },
 });
 

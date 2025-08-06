@@ -6,12 +6,11 @@
 	<string>Nous utilisons Face ID pour vous authentifier en toute sécurité</string>
 	<key>UIAppFonts</key>
 	<array>
-	<string>Ionicons.ttf</string>
+	  	<string>EvilIcons.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-Regular.ttf</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Nous avons besoin d'accéder à votre caméra pour prendre des photos</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Nous avons besoin d'accéder à votre galerie pour sélectionner des photos</string>
 	<key>NSCameraUsageDescription</key>
 	<string>AgroTech a besoin d'accéder à votre caméra pour analyser les plantes</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -40,14 +39,13 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
