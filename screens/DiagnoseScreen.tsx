@@ -618,6 +618,8 @@ diseaseItem: {
   shadowOpacity: 0.1,
   shadowRadius: 4,
   elevation: 2,
+    width: '100%', // Prend toute la largeur disponible
+
 },
 diseaseText: {
   fontSize: 17,
