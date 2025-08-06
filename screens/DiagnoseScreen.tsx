@@ -96,7 +96,7 @@ const DiagnoseScreen = ({ route, navigation }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showHealth, setShowHealth] = useState(false);
-
+const [hasSaved, setHasSaved] = useState(false);
   const handleQuestionResponse = (response: boolean) => {
     if (!result?.result.health?.disease.question) return;
 
@@ -262,10 +262,11 @@ useEffect(() => {
 
 // Enregistrement dans l’historique une fois les résultats disponibles
 useEffect(() => {
-  if (result) {
+  if (result && !hasSaved) {
     saveDiagnosisToHistory(result);
+    setHasSaved(true); // Empêche les futurs appels
   }
-}, [result]);
+}, [result, hasSaved]);
   return (
     <View style={styles.container}>
             <Header />
