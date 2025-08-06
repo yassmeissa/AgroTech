@@ -14,7 +14,7 @@ export default function App() {
     <View style={{ flex: 1 }}>
       <NavigationContainer>
         <Stack.Navigator 
-          initialRouteName="Home"
+          initialRouteName="Climat"
           screenOptions={{
             headerShown: false // Cache les en-têtes par défaut pour tous les écrans
           }}

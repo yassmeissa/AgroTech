@@ -194,14 +194,17 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar backgroundColor="#FF9800" barStyle="light-content" />
       <Header />
 
 
 
 {weatherData && (
   <View style={styles.weatherCardContainer}>
-    <View style={styles.weatherCard}>
+<TouchableOpacity
+  style={styles.weatherCard}
+  activeOpacity={0.9}
+  onPress={() => navigation.navigate('Climat')}
+>
 <View style={styles.locationRow}>
 <EvilIcons name="location" size={26} color="#e74c3c" style={styles.locationIcon} />
   <Text style={styles.location}>{weatherData.location.name}</Text>
@@ -252,7 +255,23 @@ const HomeScreen = ({ navigation }) => {
   sunrise={weatherData.forecast.forecastday[0].astro.sunrise}
   sunset={weatherData.forecast.forecastday[0].astro.sunset}
 />
-    </View>
+   </TouchableOpacity>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   </View>
 )}
 

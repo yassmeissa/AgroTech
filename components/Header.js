@@ -7,8 +7,13 @@ const { width } = Dimensions.get('window');
 const HEADER_HEIGHT = 220;
 
 const Header = () => {
-  const today = new Date().toDateString(); // e.g., "Tue Aug 6 2025"
-
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+const today = capitalize(new Date().toLocaleDateString('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}));
   return (
     <>
       <StatusBar
@@ -26,7 +31,7 @@ const Header = () => {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.topRow}>
             <View>
-              <Text style={styles.greeting}>Hello, <Text style={styles.bold}>Good Morning</Text></Text>
+              <Text style={styles.greeting}>Bonjour, <Text style={styles.bold}>Bienvenue</Text></Text>
               <Text style={styles.date}>{today}</Text>
             </View>
             <Image
