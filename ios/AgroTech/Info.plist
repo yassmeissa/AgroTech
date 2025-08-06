@@ -10,6 +10,8 @@
 		<string>Ionicons.ttf</string>
 		<string>Poppins-Bold.ttf</string>
 		<string>Poppins-Regular.ttf</string>
+		<string>AntDesign.ttf</string>
+
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>AgroTech a besoin d'accéder à votre caméra pour analyser les plantes</string>

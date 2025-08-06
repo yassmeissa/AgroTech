@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 import ChatBotModal from './ChatBotModal';
 
 const FloatingChatBotButton = () => {
@@ -11,8 +12,7 @@ const FloatingChatBotButton = () => {
 
       <View style={styles.floatingButtonContainer}>
         <TouchableOpacity style={styles.floatingButton} onPress={() => setVisible(true)}>
-          <Text style={styles.floatingText}>💬</Text>
-        </TouchableOpacity>
+<AntDesign name="wechat" size={32} color="#fff" />        </TouchableOpacity>
       </View>
     </>
   );
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   floatingButton: {
-    backgroundColor: '#2196f3',
+    backgroundColor: '#009933aa',
     borderRadius: 30,
     width: 60,
     height: 60,
@@ -36,10 +36,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowOffset: { width: 2, height: 2 },
     elevation: 5,
-  },
-  floatingText: {
-    fontSize: 28,
-    color: '#fff',
   },
 });
 

@@ -15,10 +15,15 @@ import {
   UIManager,
   View
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+const HEADER_HEIGHT = 150;
 
 export default function ChatbotScreen() {
   const [messages, setMessages] = useState<{ from: 'user' | 'bot'; text: string }[]>([
@@ -28,17 +33,10 @@ export default function ChatbotScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const typingAnim = useRef(new Animated.Value(0)).current;
-  const headerRef = useRef<View>(null);
   const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 90 : 60);
 
   // Mesurer la hauteur réelle de l'en-tête
-  const onHeaderLayout = () => {
-    if (headerRef.current) {
-      headerRef.current.measure((x, y, width, height) => {
-        setHeaderHeight(height + (Platform.OS === 'ios' ? 30 : StatusBar.currentHeight || 0));
-      });
-    }
-  };
+ 
 
   // Animation pour les points de saisie
   useEffect(() => {
@@ -75,7 +73,7 @@ export default function ChatbotScreen() {
       setInput('');
       setIsLoading(true);
 
-      const res = await fetch('https://b70f-2a01-e0a-87f-1670-dd5f-be55-aaf3-251.ngrok-free.app/chat', {
+      const res = await fetch('http://192.168.1.19:3000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
@@ -129,20 +127,31 @@ export default function ChatbotScreen() {
         style={styles.container}
         keyboardVerticalOffset={headerHeight}
       >
-        <View 
-          ref={headerRef}
-          onLayout={onHeaderLayout}
-          style={styles.header}
-        >
-          <View style={styles.headerContent}>
-            <Image 
-              source={{ uri: 'https://img.icons8.com/color/48/000000/robot-3.png' }}
-              style={styles.headerIcon}
-            />
-            <Text style={styles.headerText}>Assistant Virtuel</Text>
-          </View>
-        </View>
 
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
+
+<LinearGradient
+  colors={['#03482bff', '#009933']}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+  style={[styles.headerContainer, { height: HEADER_HEIGHT }]} // HEADER_HEIGHT défini dans ton fichier JS
+>
+  <SafeAreaView style={styles.safeArea}>
+<View style={styles.headerContent}>
+  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+    <Icon name="arrow-back" size={26} color="#fff" />
+  </TouchableOpacity>
+
+  <View style={styles.titleWrapper}>
+    <Text style={styles.greeting}>Assistant virtuel</Text>
+  </View>
+</View>
+  </SafeAreaView>
+</LinearGradient>
         <ScrollView
           ref={scrollViewRef}
           style={styles.chatContainer}
@@ -238,9 +247,63 @@ export default function ChatbotScreen() {
 }
 
 const styles = StyleSheet.create({
+
+  backButton: {
+    position: 'absolute',
+    top: 25,
+    left: 20,
+    zIndex: 20,
+    backgroundColor: '#009933aa',
+    padding: 8,
+    borderRadius: 20,
+  },
+
+ headerContainer: {
+    height: HEADER_HEIGHT,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+headerContent: {
+  position: 'relative',
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',         // Centrage vertical
+  justifyContent: 'center',     // Centrage horizontal
+},
+titleWrapper: {
+  flex: 1,
+  alignItems: 'center',
+},
+
+greeting: {
+  fontSize: 22,
+  color: '#fff',
+  fontWeight: 'bold',
+  textAlign: 'center',
+},
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+    avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'white',
+      marginRight: 20, // ✅ Ajouté
+
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: '#6e48aa',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
   },
   container: {
@@ -250,35 +313,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     overflow: 'hidden',
   },
-  header: {
-    backgroundColor: '#6e48aa',
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
-    paddingBottom: 15,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  headerIcon: {
-    width: 30,
-    height: 30,
-    marginRight: 10,
-  },
-  headerText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
+
   chatContainer: {
     flex: 1,
     paddingHorizontal: 15,
@@ -308,7 +343,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   userBubble: {
-    backgroundColor: '#6e48aa',
+    backgroundColor: '#065a37ff',
     alignSelf: 'flex-end',
     borderTopRightRadius: 4,
     marginRight: 10,
@@ -371,20 +406,20 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     marginLeft: 12,
-    backgroundColor: '#6e48aa',
+    backgroundColor: '#009933aa',
     width: 50,
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#6e48aa',
+    shadowColor: '#009933aa',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
   },
   sendButtonDisabled: {
-    backgroundColor: '#b3a1d8',
+    backgroundColor: '#3dd36faa',
   },
   userMessageTail: {
     position: 'absolute',
@@ -399,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#6e48aa',
+    borderBottomColor: '#0065a37ff',
     transform: [{ rotate: '-20deg' }],
   },
     sendIcon: {

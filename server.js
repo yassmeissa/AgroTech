@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const serviceAccount = require('./newagent-f9uf-05968185e837.json'); // clé téléchargée
+const serviceAccount = require('./newagent-f9uf-d7a7fc319792.json'); // clé téléchargée
 
 app.post('/chat', async (req, res) => {
   try {
