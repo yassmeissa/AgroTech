@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const dialogflow = require('@google-cloud/dialogflow');
 const uuid = require('uuid');
@@ -8,13 +7,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const serviceAccount = require('./newagent-f9uf-d7a7fc319792.json'); // clé téléchargée
+const serviceAccount = require('./newagent-f9uf-3e1b876dc95f.json'); // clé téléchargée
 
 app.post('/chat', async (req, res) => {
   try {
     console.log('Message reçu:', req.body.message);
     const { message } = req.body;
-    
+
     if (!message) {
       return res.status(400).send({ reply: "Le message est requis" });
     }
@@ -29,7 +28,7 @@ app.post('/chat', async (req, res) => {
 
     const sessionPath = sessionClient.projectAgentSessionPath(
       serviceAccount.project_id,
-      sessionId
+      sessionId // Retirez le console.log ici
     );
 
     const request = {
@@ -44,10 +43,10 @@ app.post('/chat', async (req, res) => {
 
     const responses = await sessionClient.detectIntent(request);
     const result = responses[0].queryResult;
-    
+
     console.log('Réponse envoyée:', result.fulfillmentText);
     res.send({ reply: result.fulfillmentText });
-    
+
   } catch (error) {
     console.error('Erreur serveur:', error);
     res.status(500).send({ reply: "Erreur interne du serveur" });
