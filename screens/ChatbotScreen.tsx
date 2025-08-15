@@ -25,7 +25,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 const HEADER_HEIGHT = 150;
 
-export default function ChatbotScreen() {
+export default function ChatbotScreen({ navigation }: { navigation: any }) {
   const [messages, setMessages] = useState<{ from: 'user' | 'bot'; text: string }[]>([
     { from: 'bot', text: "Bonjour ! Comment puis-je vous aider aujourd'hui ?" }
   ]);
@@ -142,9 +142,12 @@ export default function ChatbotScreen() {
 >
   <SafeAreaView style={styles.safeArea}>
 <View style={styles.headerContent}>
-  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-    <Icon name="arrow-back" size={26} color="#fff" />
-  </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.backButton}
+      onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home'))}
+    >
+      <Icon name="arrow-back" size={26} color="#fff" />
+    </TouchableOpacity>
 
   <View style={styles.titleWrapper}>
     <Text style={styles.greeting}>Assistant virtuel</Text>

@@ -160,7 +160,7 @@ const saveDiagnosisToHistory = async (diagnosis: Result) => {
       const apiResponse = await fetch('https://plant.id/api/v3/identification', {
         method: 'POST',
         headers: {
-          'Api-Key': 'i3zNsDJLuLLP5GeuzLv7OSG5XFAmeqIChNR98eW5v6oLIJDBpr',
+          'Api-Key': 'vNmOeBARO7rNDdDswLV4fuB7bAsU0QcMFkLwTqlPrHbcYhRWzB',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
@@ -184,9 +184,10 @@ const analyzeHealthOnServer = async (imageUri: string) => {
     const response = await fetch(imageUri);
     const blob = await response.blob();
 
-    const base64data = await new Promise<string>((resolve) => {
+    const base64data = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
 
@@ -194,49 +195,70 @@ const analyzeHealthOnServer = async (imageUri: string) => {
 
     const requestBody = {
       images: [base64Image],
-      health: 'auto', // 'auto' est plus sûr que 'only' si tu n'es pas sûr
-      similar_images: true
+      health: 'auto',
+      similar_images: true,
+      // Tu peux demander des détails supplémentaires si ton plan l’autorise :
+      // disease_details: ["description","treatment","common_names"]
     };
 
     const apiResponse = await fetch('https://plant.id/api/v3/health_assessment', {
       method: 'POST',
       headers: {
-        'Api-Key': 'i3zNsDJLuLLP5GeuzLv7OSG5XFAmeqIChNR98eW5v6oLIJDBpr',
+        'Api-Key': 'vNmOeBARO7rNDdDswLV4fuB7bAsU0QcMFkLwTqlPrHbcYhRWzB',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
     });
 
-    const responseText = await apiResponse.text();
+    const contentType = apiResponse.headers.get('content-type') || '';
+    const textBody = await apiResponse.text();
 
-    try {
-      const data = JSON.parse(responseText);
+    // Si ce n'est pas du JSON, on ne parse pas
+    const maybeJson = contentType.includes('application/json');
+    const data = maybeJson ? (() => { try { return JSON.parse(textBody); } catch { return null; } })() : null;
 
-      if (apiResponse.ok) {
-        setResult(prev => ({
-          ...prev,
-          result: {
-            ...prev?.result,
-            health: data.result
-          }
-        }));
+    // Gestion des erreurs HTTP avec message lisible
+    if (!apiResponse.ok) {
+      const status = apiResponse.status;
+
+      // Messages plus explicites selon le statut
+      if (status === 401 || status === 403) {
+        setError("Accès refusé par l'API santé (clé/plan). Vérifie la clé ou ton abonnement.");
+      } else if (status === 415) {
+        setError("Format de requête non supporté par l'API santé.");
+      } else if (status === 429) {
+        setError("Trop de requêtes envoyées à l'API santé (quota dépassé). Réessaie plus tard.");
       } else {
-        setError(data.error || 'Erreur lors de l\'évaluation de la santé.');
-        console.error('Erreur santé :', data);
+        setError(`Erreur API santé (${status}) : ${maybeJson && data?.error ? data.error : textBody}`);
       }
-    } catch (parseError) {
-      // Le corps n'était pas un JSON
-      console.error('Erreur de parsing JSON santé :', parseError);
-      console.log('Réponse brute reçue :', responseText);
-      setError('Réponse invalide de l\'API santé : ' + responseText);
+
+      console.error('Réponse erreur santé :', { status, contentType, body: textBody });
+      return;
     }
+
+    // Ici, la réponse est OK
+    if (!maybeJson || !data) {
+      // L’API a répondu OK mais sans JSON : on protège l’app et on log
+      console.error('Réponse OK mais non-JSON de la santé :', { contentType, body: textBody });
+      setError("Réponse inattendue de l'API santé.");
+      return;
+    }
+
+    // Selon la doc Plant.id v3, le résultat santé est généralement dans data.result
+    const healthResult = data.result ?? data; // on couvre les deux cas
+    setResult(prev => ({
+      ...(prev ?? { result: {} as any }),
+      result: {
+        ...(prev?.result ?? {}),
+        health: healthResult,
+      },
+    }));
 
   } catch (err) {
     console.error('Erreur de connexion santé :', err);
-    setError('Erreur de connexion au serveur.');
+    setError('Erreur de connexion au serveur (santé).');
   }
 };
-
 useEffect(() => {
   const analyzeImage = async () => {
     if (image?.uri) {
