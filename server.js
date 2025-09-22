@@ -52,7 +52,7 @@ app.post('/chat', async (req, res) => {
     res.status(500).send({ reply: "Erreur interne du serveur" });
   }
 });
-
-app.listen(3000, () => {
-  console.log('✅ Backend Dialogflow en écoute sur http://localhost:3000');
+app.get('/health', (req, res) => res.send('ok'));
+app.listen(3000, '0.0.0.0', () => {
+  console.log('✅ Backend Dialogflow en écoute sur http://0.0.0.0:3000');
 });

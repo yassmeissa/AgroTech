@@ -7,7 +7,7 @@ import ClimatScreen from './screens/ClimatScreen';
 import DiagnoseScreen from './screens/DiagnoseScreen';
 import HomeScreen from './screens/HomeScreen';
 import ChatbotScreen from './screens/ChatbotScreen';
-
+import FaceIDScreen from './screens/FaceIDScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -29,10 +29,10 @@ export default function App() {
         }}
       >
         <Stack.Navigator
-          initialRouteName="Home"
+          initialRouteName="FaceIDScreen"
           screenOptions={{ headerShown: false }}
         >
-          {/* <Stack.Screen name="FaceIDScreen" component={FaceIDScreen} /> */}
+          <Stack.Screen name="FaceIDScreen" component={FaceIDScreen} /> 
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Diagnose" component={DiagnoseScreen} />
           <Stack.Screen name="Climat" component={ClimatScreen} />

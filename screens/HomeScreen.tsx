@@ -44,6 +44,8 @@ const HomeScreen = ({ navigation }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
+  const [location, setLocation] = useState(null);
+
   const apiKey = '73e3d10d8cfb49aeb2071342250104';
 
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -236,7 +238,13 @@ return (
         <TouchableOpacity
           style={styles.weatherCard}
           activeOpacity={0.9}
-          onPress={() => navigation.navigate('Climat')}
+           onPress={() =>
+   navigation.navigate('Climat', {
+     lat: latitude,
+     lon: longitude,
+     locationName: weatherData?.location?.name, // ex: Dakar, Thiès…
+   })
+ }
         >
           {/* Contenu de la carte météo */}
           <View style={styles.locationRow}>

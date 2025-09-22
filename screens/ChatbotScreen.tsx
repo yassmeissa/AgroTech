@@ -34,6 +34,7 @@ export default function ChatbotScreen({ navigation }: { navigation: any }) {
   const scrollViewRef = useRef<ScrollView>(null);
   const typingAnim = useRef(new Animated.Value(0)).current;
   const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 90 : 60);
+  const BASE_URL = 'https://d111c069c010.ngrok-free.app';
 
   // Mesurer la hauteur réelle de l'en-tête
  
@@ -73,7 +74,7 @@ export default function ChatbotScreen({ navigation }: { navigation: any }) {
       setInput('');
       setIsLoading(true);
 
-      const res = await fetch('http://192.168.1.19:3000/chat', {
+      const res = await fetch(`${BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
